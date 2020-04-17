@@ -2,12 +2,14 @@ from tabulate import *
 import json
 import requests
 from APIC_ticket import *
+from APICEMFunctionPack import *
 
 
 APICEM_DATA = {
     "username": "devnetuser",
     "password": "Xj3BDqbU",
-    "api_url": "https://DevnetSBX-NetAcad-APICEM-3.cisco.com"
+    "api_url": "https://DevnetSBX-NetAcad-APICEM-3.cisco.com",
+    "key": "-1"
 }
 
 
@@ -35,7 +37,7 @@ def setDefaultCredential():
 
 
 def getNetworkHostInventory():
-    pass
+    get_NetworkHostInventory(APICEM_DATA["api_url"], APICEM_DATA["key"])
 
 
 def main():
@@ -49,7 +51,7 @@ def main():
         print("========>    MENÚ APIC-EM    <=======")
         print("=====================================")
 
-        print("1) Añadir credenciales y/o URL")
+        print("1) Listar los Host de la red")
         print("2) Usar credenciales y URL por defecto")
         print("3) Listar los Host de la red")
         print("X) Pulse cualquier otra tecla para salir")
@@ -101,7 +103,9 @@ if __name__ == "__main__":
                                               APICEM_DATA["api_url"])
 
         ticket = apicObj.get_ticket()
-        if(str(ticket) != "-1"):
+        APICEM_DATA["key"] = ticket
+        if (str(ticket) != "-1"):
+            print("Ticket generado!!!")
             main()
     except:
         print("Error durante el acceso a la página")

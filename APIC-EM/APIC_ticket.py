@@ -64,6 +64,11 @@ class APICEM_ticket:
                 print("Error en el Login")
                 return "-1"
 
+    def refreshTicket(self):
+        self.ticket = self.create_ticket(
+            self.username, self.password, self.api_url)
+        return self.ticket
+
     def get_ticket(self):
         return self.ticket
 

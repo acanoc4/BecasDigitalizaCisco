@@ -5,6 +5,7 @@ from tabulate import *
 
 def get_NetworkHostInventory(api_url, ticket):
 
+    api_url = api_url + "/api/v1/host"
     headers = {
         "content-type": "application/json",
         "X-Auth-Token": ticket
@@ -29,4 +30,3 @@ def get_NetworkHostInventory(api_url, ticket):
         host_list.append(host)
     table_header = ["Number", "Type", "IP"]
     print(tabulate(host_list, table_header))
-
