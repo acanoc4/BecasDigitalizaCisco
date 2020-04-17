@@ -3,6 +3,7 @@ import json
 import requests
 from APIC_ticket import *
 from APICEMFunctionPack import *
+import ipaddress
 
 
 APICEM_DATA = {
@@ -40,6 +41,20 @@ def getNetworkHostInventory():
     get_NetworkHostInventory(APICEM_DATA["api_url"], APICEM_DATA["key"])
 
 
+def getIPGeolocation():
+    ip = input("Introduzca la dirección ip pública deseada:")
+
+    try:
+        if ipaddress.ip_address(ip).is_global:
+            get_IPGeolocation(APICEM_DATA["api_url"],
+                              APICEM_DATA["key"], ip)
+        else:
+            print("No es un IP pública")
+
+    except:
+        print("La IP escrita es errónea:"+ip)
+
+
 def main():
 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -61,7 +76,7 @@ def main():
 
             "1": getNetworkHostInventory,
 
-            "2": "xxx",
+            "2": getIPGeolocation,
         }
 
         try:
@@ -70,7 +85,8 @@ def main():
 
             print("\n\n")
 
-        except:
+        except Exception as e:
+            print(e)
             print("BYE BYE\n")
             break
 

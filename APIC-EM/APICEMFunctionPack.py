@@ -1,11 +1,14 @@
 import requests
 import json
 from tabulate import *
+import urllib3
+
+version = "v1"
 
 
 def get_NetworkHostInventory(api_url, ticket):
 
-    api_url = api_url + "/api/v1/host"
+    api_url = api_url + "/api/"+version+"/host"
     headers = {
         "content-type": "application/json",
         "X-Auth-Token": ticket
@@ -30,3 +33,27 @@ def get_NetworkHostInventory(api_url, ticket):
         host_list.append(host)
     table_header = ["Number", "Type", "IP"]
     print(tabulate(host_list, table_header))
+
+
+def get_IPGeolocation(api_url, ticket, ip):
+    api_url = api_url + "/api/"+version+"/ipgeo/"+ip
+    headers = {
+        "content-type": "application/json",
+        "X-Auth-Token": ticket
+    }
+
+    resp = requests.get(api_url, headers=headers, verify=False)
+    print("Status of /host request: ", resp.status_code)
+    if resp.status_code != 200:
+        raise Exception(
+            "Status code does not equal 200. Response text: " + resp.text)
+    response_json = resp.json()
+
+    try:
+        for key, value in response_json["response"][ip].items():
+            if(value == None):
+                print(key + "-->DESCONOCIDO")
+            else:
+                print(key+"-->"+value)
+    except Exception as e:
+        print(e)
