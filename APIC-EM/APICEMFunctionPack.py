@@ -57,3 +57,63 @@ def get_IPGeolocation(api_url, ticket, ip):
                 print(key+"-->"+value)
     except Exception as e:
         print(e)
+
+
+def get_FlowAnalysis(api_url, ticket):
+
+    api_url = api_url + "/api/"+version+"/flow-analysis"
+
+    headers = {
+        "content-type": "application/json",
+        "X-Auth-Token": ticket
+    }
+
+    resp = requests.get(api_url, headers=headers, verify=False)
+
+    if resp.status_code != 200:
+        raise Exception(
+            "Status code does not equal 200. Response text: " + resp.text)
+    response_json = resp.json()
+
+    lista = []
+
+    table_header = ["Numero", "IP Origen", "Puerto Origen",
+                    "IP Destino", "Puerto Destino", "Protocolo", "Status"]
+
+    i = 1
+    for item in response_json["response"]:
+        i += 1
+        lista.append([
+            i,
+            item["sourceIP"],
+            item["sourcePort"] if "sourcePort" in lista else "---",
+            item["destIP"],
+            item["destPort"] if "destPort" in lista else "---",
+            item["protocol"] if "protocol" in lista else "---",
+            item["status"]
+        ])
+
+    print(tabulate(lista, table_header))
+
+
+def get_Interfaces(api_url, ticket):
+
+    api_url = api_url + "/api/"+version+"/interface"
+
+    headers = {
+        "content-type": "application/json",
+        "X-Auth-Token": ticket
+    }
+    resp = requests.get(api_url, headers=headers, verify=False)
+    if resp.status_code != 200:
+        raise Exception(
+            "Status code does not equal 200. Response text: " + resp.text)
+    response_json = resp.json()
+    i = 0
+    for item in response_json["response"]:
+        i += 1
+        print("\n\n=========Interface " + str(i) + " =======")
+
+        for key, value in item.items():
+            if(value != "null" and value != "" and value != None):
+                print(key + "-->" + value)

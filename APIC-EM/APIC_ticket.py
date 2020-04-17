@@ -1,7 +1,6 @@
 import json
 import requests
 
-
 # Es de tipo singleton
 
 
@@ -33,6 +32,13 @@ class APICEM_ticket:
             self.password = password
             self.api_url = api_url
             APICEM_ticket.__instance = self
+
+    def newConnection(self, username, password, api_url):
+        self.ticket = self.create_ticket(username, password, api_url)
+        self.username = username
+        self.password = password
+        self.api_url = api_url
+        return self.create_ticket(username, password, api_url)
 
     def create_ticket(self, username, password, api_url):
         try:

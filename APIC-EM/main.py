@@ -12,6 +12,12 @@ APICEM_DATA = {
     "api_url": "https://DevnetSBX-NetAcad-APICEM-3.cisco.com",
     "key": "-1"
 }
+APICEM_DATA_BCKUP = {
+    "username": "devnetuser",
+    "password": "Xj3BDqbU",
+    "api_url": "https://DevnetSBX-NetAcad-APICEM-3.cisco.com",
+    "key": "-1"
+}
 
 
 def setCredential():
@@ -23,14 +29,49 @@ def setCredential():
 
 
 def setCredentialURL():
+    api_url = input(
+        "Introduzca URL\n(Ejemplos:https://DevnetSBX-NetAcad-APICEM-3.cisco.com ; https://sandboxapicem.cisco.com)->")
     username = input("Introduzca username->")
     password = input("Introduzca password->")
-    api_url = input(
-        "Introduzca URL (Ejemplo:https://DevnetSBX-NetAcad-APICEM-3.cisco.com)->")
 
     APICEM_DATA["username"] = username
     APICEM_DATA["password"] = password
     APICEM_DATA["api_url"] = api_url
+
+
+def changeURL():
+    APICEM_DATA_BCKUP["username"] = APICEM_DATA["username"]
+    APICEM_DATA_BCKUP["password"] = APICEM_DATA["password"]
+    APICEM_DATA_BCKUP["api_url"] = APICEM_DATA["api_url"]
+    setCredentialURL()
+    try:
+        obj = APICEM_ticket.getInstance()
+        ticket = obj.newConnection(APICEM_DATA["username"],
+                                   APICEM_DATA["password"],
+                                   APICEM_DATA["api_url"])
+
+        if (str(ticket) != "-1"):
+            APICEM_DATA["key"] = ticket
+            print("Ticket generado!!!")
+        else:
+            print("Error durante el login, volviendo a anteriores credenciales...")
+            APICEM_DATA["username"] = APICEM_DATA_BCKUP["username"]
+            APICEM_DATA["password"] = APICEM_DATA_BCKUP["password"]
+            APICEM_DATA["api_url"] = APICEM_DATA_BCKUP["api_url"]
+            obj = APICEM_ticket.getInstance()
+            ticket = obj.newConnection(APICEM_DATA["username"],
+                                       APICEM_DATA["password"],
+                                       APICEM_DATA["api_url"])
+    except Exception as e:
+        print(e)
+        print("Error durante el acceso a la página, volviendo a anteriores credenciales...")
+        APICEM_DATA["username"] = APICEM_DATA_BCKUP["username"]
+        APICEM_DATA["password"] = APICEM_DATA_BCKUP["password"]
+        APICEM_DATA["api_url"] = APICEM_DATA_BCKUP["api_url"]
+        obj = APICEM_ticket.getInstance()
+        ticket = obj.newConnection(APICEM_DATA["username"],
+                                   APICEM_DATA["password"],
+                                   APICEM_DATA["api_url"])
 
 
 def setDefaultCredential():
@@ -52,7 +93,16 @@ def getIPGeolocation():
             print("No es un IP pública")
 
     except:
-        print("La IP escrita es errónea:"+ip)
+        print("La IP escrita es errónea:" + ip)
+
+
+def getFlowAnalysis():
+    get_FlowAnalysis(APICEM_DATA["api_url"], APICEM_DATA["key"])
+
+
+def getInterfaces():
+    get_Interfaces(APICEM_DATA["api_url"],
+                   APICEM_DATA["key"])
 
 
 def main():
@@ -67,8 +117,10 @@ def main():
         print("=====================================")
 
         print("1) Listar los Host de la red")
-        print("2) Usar credenciales y URL por defecto")
-        print("3) Listar los Host de la red")
+        print("2) Conocer la Geolocalización de una IP Pública")
+        print("3) Listar el flujo de tráfico")
+        print("4) Listar interfaces")
+        print("5) Cambiar URL y usuario")
         print("X) Pulse cualquier otra tecla para salir")
 
         eleccion = input("Escoja opción->")
@@ -77,7 +129,12 @@ def main():
             "1": getNetworkHostInventory,
 
             "2": getIPGeolocation,
-        }
+
+            "3": getFlowAnalysis,
+
+            "4": getInterfaces,
+
+            "5": changeURL}
 
         try:
 
@@ -117,7 +174,6 @@ if __name__ == "__main__":
         apicObj = APICEM_ticket.firstInstance(APICEM_DATA["username"],
                                               APICEM_DATA["password"],
                                               APICEM_DATA["api_url"])
-
         ticket = apicObj.get_ticket()
         APICEM_DATA["key"] = ticket
         if (str(ticket) != "-1"):
