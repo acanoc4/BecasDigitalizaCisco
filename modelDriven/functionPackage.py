@@ -121,10 +121,10 @@ class YangFunctionPackage:
         newInterface = []
         listInterface = []
         i = 0
-        if(len(netconf_reply_dict2) > 1):
+        print(len(netconf_reply_dict2))
+        try:
             for interface in netconf_reply_dict2:
                 i += 1
-                print(interface)
                 for addr in self.getIP(interface["name"]):
                     newInterface = [
                         i,
@@ -136,7 +136,7 @@ class YangFunctionPackage:
                     listInterface.append(newInterface)
             print(tabulate(listInterface, cabecera))
 
-        else:
+        except:
             self.get_dataRestconf()
 
 
