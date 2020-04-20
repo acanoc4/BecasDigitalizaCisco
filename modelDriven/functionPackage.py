@@ -9,7 +9,7 @@ from tabulate import *
 import requests
 
 
-class YangFunctionPackage():
+class YangFunctionPackage:
 
     headers = {'Content-Type': 'application/yang-data+json',
                'Accept': 'application/yang-data+json'}
@@ -33,12 +33,16 @@ class YangFunctionPackage():
 
         api_url = "https://"+self.ip+"/restconf/data/ietf-interfaces:interfaces-state/"
 
-        resp = requests.get(api_url, auth=(
-            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
+        try:
+            resp = requests.get(api_url, auth=(
+                self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
 
-        if(resp.status_code >= 200 and resp.status_code <= 299):
-            return True
-        else:
+            if(resp.status_code >= 200 and resp.status_code <= 299):
+                return True
+            else:
+                return False
+        except:
+            print("no ha sido posible conectarse al router!")
             return False
 
     def getIP(self, value):
@@ -66,7 +70,7 @@ class YangFunctionPackage():
         api_url = "https://"+self.ip+"/restconf/data/ietf-interfaces:interfaces-state/"
 
         resp = requests.get(api_url, auth=(
-            self.basicAuth["username"], self.basicAuth["password"]), headers=self.isValidheaders, verify=False)
+            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
 
         resp_json = resp.json()
 
@@ -75,7 +79,7 @@ class YangFunctionPackage():
         listInterface = []
         i = 0
         for interface in resp_json["ietf-interfaces:interfaces-state"]["interface"]:
-
+            i += 1
             for addr in self.getIP(interface["name"]):
                 newInterface = [
                     i,
@@ -93,8 +97,8 @@ class YangFunctionPackage():
         m = manager.connect(
             host=self.ip,
             port=830,
-            username=self.username,
-            password=self.password,
+            username=self.basicAuth["username"],
+            password=self.basicAuth["password"],
             hostkey_verify=False
         )
 
@@ -117,20 +121,23 @@ class YangFunctionPackage():
         newInterface = []
         listInterface = []
         i = 0
+        if(len(netconf_reply_dict2) > 1):
+            for interface in netconf_reply_dict2:
+                i += 1
+                print(interface)
+                for addr in self.getIP(interface["name"]):
+                    newInterface = [
+                        i,
+                        interface["name"],
+                        addr["ip"],
+                        addr["netmask"],
+                        interface["phys-address"]
+                    ]
+                    listInterface.append(newInterface)
+            print(tabulate(listInterface, cabecera))
 
-        for interface in netconf_reply_dict2:
-            i += 1
-            for addr in self.getIP(interface["name"]):
-                newInterface = [
-                    i,
-                    interface["name"],
-                    addr["ip"],
-                    addr["netmask"],
-                    interface["phys-address"]
-                ]
-                listInterface.append(newInterface)
-
-        print(tabulate(listInterface, cabecera))
+        else:
+            self.get_dataRestconf()
 
 
 # =======================DELETE INTERFACE=============================
@@ -142,7 +149,7 @@ class YangFunctionPackage():
             "/restconf/data/ietf-interfaces:interfaces/interface="+value
 
         resp = requests.delete(api_url, auth=(
-            basicAuth["username"], basicAuth["password"]), headers=headers, verify=False)
+            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
 
         if(resp.status_code >= 200 and resp.status_code <= 299):
             print("STATUS OK: {}".format(resp.status_code))
@@ -191,83 +198,83 @@ class YangFunctionPackage():
                         ]
 
                         routeList.append(newRoute)
-                    i += 1
+                        i += 1
+
             print(tabulate(routeList, cabecera))
 
         else:
             print("Error code {}, reply: {}".format(
                 resp.status_code, resp.json()))
 
+    def createInterface(self, name="", description="", ip="", enabled=True, netmask="255.255.255.0", type="softwareLoopback"):
 
-def createInterface(self, name="", description="", ip="", enabled=True, netmask="255.255.255.0", type="softwareLoopback"):
+        requests.packages.urllib3.disable_warnings()
 
-    requests.packages.urllib3.disable_warnings()
+        api_url = "https://"+self.ip + \
+            "/restconf/data/ietf-interfaces:interfaces/interface=" + name
+        print(api_url)
 
-    api_url = "https://"+self.ip + \
-        "/restconf/data/ietf-interfaces:interfaces/interface=" + name
-    print(api_url)
+        basicauth = ("cisco", "cisco123!")
 
-    basicauth = ("cisco", "cisco123!")
-
-    yangConfig = {
-        "ietf-interfaces:interface": {
-            "name": name,
-            "description": description,
-            "type": "iana-if-type:"+type,
-            "enabled": enabled,
-            "ietf-ip:ipv4": {
-                "address": [
-                    {
-                        "ip": ip,
-                        "netmask": netmask
-                    }
-                ]
-            },
-            "ietf-ip:ipv6": {}
+        yangConfig = {
+            "ietf-interfaces:interface": {
+                "name": name,
+                "description": description,
+                "type": "iana-if-type:"+type,
+                "enabled": enabled,
+                "ietf-ip:ipv4": {
+                    "address": [
+                        {
+                            "ip": ip,
+                            "netmask": netmask
+                        }
+                    ]
+                },
+                "ietf-ip:ipv6": {}
+            }
         }
-    }
 
-    print(yangConfig)
+        print(yangConfig)
 
-    resp = requests.put(api_url, data=json.dumps(yangConfig),
-                        auth=basicauth, headers=self.headers, verify=False)
-    if (resp.status_code >= 200 and resp.status_code <= 299):
-        pass
-    else:
-        print("Error code {}, reply: {}".format(resp.status_code, resp.json()))
+        resp = requests.put(api_url, data=json.dumps(yangConfig),
+                            auth=basicauth, headers=self.headers, verify=False)
+        if (resp.status_code >= 200 and resp.status_code <= 299):
+            pass
+        else:
+            print("Error code {}, reply: {}".format(
+                resp.status_code, resp.json()))
 
+    def getCapability(self):
 
-def getCapability(self):
+        api_url = "https://"+self.ip + \
+            "/restconf/data/ietf-yang-library:modules-state"
 
-    api_url = "https://"+self.ip"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities"
+        resp = requests.get(api_url, auth=(
+            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
+        resp_json = resp.json()
+        print(json.dumps(resp_json, indent=4))
 
-    resp = requests.get(api_url, auth=(
-        self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
-    resp_json = resp.json()
-    print(json.dumps(resp_json, indent=4))
+        if (resp.status_code >= 200 and resp.status_code <= 299):
+            pass
+        else:
+            print("Error code {}, reply: {}".format(
+                resp.status_code, resp.json()))
 
-    if (resp.status_code >= 200 and resp.status_code <= 299):
-        pass
-    else:
-        print("Error code {}, reply: {}".format(resp.status_code, resp.json()))
+    def getVersionandMemory(self):
 
+        api_url = "https://" + self.ip + "/restconf/data/Cisco-IOS-XE-native:native/"
+        api_urlMemory = "https://" + self.ip + \
+            "/restconf/data/Cisco-IOS-XE-memory-oper:memory-statistics/memory-statistic"
 
-def getVersionandMemory(self):
-
-    api_url = "https://" + self.ip + "/restconf/data/Cisco-IOS-XE-native:native/"
-    api_urlMemory = "https://" + self.ip + \
-        "/restconf/data/Cisco-IOS-XE-memory-oper:memory-statistics/memory-statistic"
-
-    resp1 = requests.get(api_url, auth=(
-        self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
-    resp_json1 = resp.json()
-    version = resp_json1["Cisco-IOS-XE-native:native"]["version"]
-    print("-Versión Software: ", version)
-    resp2 = requests.get(api_urlMemory, auth=(
-        self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
-    resp_json2 = resp.json()
-    print("-Datos memoria:")
-    for resp in resp_json2["Cisco-IOS-XE-memory-oper:memory-statistic"]:
-        for key, value in rep.items():
-            if(value != "null" and value != "" and value != None):
-                print("+"+key + " --> " + value)
+        resp1 = requests.get(api_url, auth=(
+            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
+        resp_json1 = resp1.json()
+        version = resp_json1["Cisco-IOS-XE-native:native"]["version"]
+        print("-Versión Software: ", version)
+        resp2 = requests.get(api_urlMemory, auth=(
+            self.basicAuth["username"], self.basicAuth["password"]), headers=self.headers, verify=False)
+        resp_json2 = resp2.json()
+        print("-Datos memoria:")
+        for resp in resp_json2["Cisco-IOS-XE-memory-oper:memory-statistic"]:
+            for key, value in resp.items():
+                print("\t+"+str(key) + " --> " + str(value))
